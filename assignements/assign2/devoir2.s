@@ -17,17 +17,8 @@ inputs:
     adr     x0, fmtLuIn
     adr     x1, num
     bl      scanf
-    ldr     x20, num
 
-// Loop entre x19 et x20 pour avoir la liste des entiers
-
-// "Filter" si les nombres sont premiers, compter
-
-// Palindrome check, compter
-
-// Redirection vers le output
-
-outputs:
+print_inputs:
     // Affichage des entrees (sortie)
     adr     x0, fmtLuOut
     mov     x1, x19
@@ -35,6 +26,17 @@ outputs:
     adr     x0, fmtLuOut
     mov     x1, x20
     bl      printf
+    ldr     x20, num
+
+// Loop entre x19 et x20 pour avoir la liste des entiers
+
+
+// "Filter" si les nombres sont premiers, compter
+
+// Palindrome check, compter
+
+// Redirection vers le output
+
 
     // Fin
     mov     x0, 0
