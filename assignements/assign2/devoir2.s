@@ -17,18 +17,28 @@ inputs:
     adr     x0, fmtLuIn
     adr     x1, num
     bl      scanf
+    ldr     x20, num
 
+// Affichage des entrees (sortie)
 print_inputs:
-    // Affichage des entrees (sortie)
     adr     x0, fmtLuOut
     mov     x1, x19
     bl      printf
     adr     x0, fmtLuOut
     mov     x1, x20
     bl      printf
-    ldr     x20, num
 
 // Loop entre x19 et x20 pour avoir la liste des entiers
+loop:
+    // Affichage loop pour debug
+    adr     x0, fmtLuOut
+    mov     x1, x19
+    bl      printf
+    // incrementation
+    cmp     x19, x20
+    b.eq    end
+    add     x19, x19, 1
+    b       loop
 
 
 // "Filter" si les nombres sont premiers, compter
@@ -37,8 +47,11 @@ print_inputs:
 
 // Redirection vers le output
 
-
+end:
     // Fin
+    adr     x0, fmtStrOut
+    adr     x1, msgInput
+    bl      printf
     mov     x0, 0
     bl      exit
 
