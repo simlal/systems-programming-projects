@@ -19,10 +19,19 @@ inputs:
     bl      scanf
     ldr     x20, num
 
+// Loop entre x19 et x20 pour avoir la liste des entiers
+
+// "Filter" si les nombres sont premiers, compter
+
+// Palindrome check, compter
+
+// Redirection vers le output
+
 outputs:
     // Affichage des entrees (sortie)
     adr     x0, fmtLuOut
-
+    mov     x1, x19
+    bl      printf
     adr     x0, fmtLuOut
     mov     x1, x20
     bl      printf
