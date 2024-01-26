@@ -72,13 +72,22 @@ if [[ ! -f "$CURRENT_DIR/MakeFile" ]] && [[ ! -f "$CURRENT_DIR/makefile" ]] && [
     exit 1
 fi
 
-# Compiling and moving to build
+# Assembly and moving to build dir
 make
+if [[ $? -ne 0 ]]; then
+    echo -e "\nError at assembly (see gcc output). Could not execute program, exiting."
+    exit 1
+fi
 move_to_build_dir "$CURRENT_DIR"
 
+# Execution
 bin_name=$(find_binary)    # exit 1 if no binary found
-echo "Executing binary ./$bin_name..."
+echo -e "Executing binary ./$bin_name...\n"
 ./$bin_name
 
-echo "Done execution!"
+if [[ $? -ne 0 ]]; then
+    echo "Error at runtime :(. Verify your code!"
+    exit 1
+fi
+echo "Done executing ./$bin_name without errors :)"
 exit 0
