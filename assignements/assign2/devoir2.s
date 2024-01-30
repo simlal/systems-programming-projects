@@ -10,8 +10,7 @@ main:
 
 inputs:
     mov     x19, 2
-    mov     x20, 10
-    mov     x21, 0
+    mov     x20, 30
 //inputs:
 //    adr     x0, fmtLuIn
 //    adr     x1, num
@@ -36,28 +35,47 @@ print_inputs:
     adr     x1, msgSep
     bl      printf
 
-// Loop entre x19 et x20 pour avoir la liste des entiers
-loop_input_range:
-    mov     x22, 2    
-    udiv    x23, x19, x22    
-    msub    x23, x22, x23, x19    // remainder = (divisor*quotient) - dividend
-    
-    adr     x0, fmtLuOut
-    mov     x1, x19
-    bl      printf    // print loop
-    adr     x0, fmtLuOut
-    mov     x1, x23
-    bl      printf    // print remainder
+initialisation:
+    mov     x21, 0    // Total prime num
+    add     x20, x20, 1    // Pour ele final dans boucle
 
-    cbz     x23, skip_primecount
+// Loop entre x19 et x20 pour avoir la liste des entiers
+input_loop_start:
+    mov     x22, 2    // Init iterateur pour division premier
+    mov     x24, 1    // Flag pour nb premier (1 == prime)
+
+prime_loop_start:
+    cmp     x22, x19    // Valide si on sort de boucle prime
+    b.ge    check_prime    // et flag prime a ete modif
+
+    udiv    x23, x19, x22    
+    msub    x23, x22, x23, x19    // x23 remainder = (divisor*quotient) - dividend
+    
+    //adr     x0, fmtLuOut
+    //mov     x1, x19
+    //bl      printf
+    cbz     x23, not_prime
+
+    add     x22, x22, 1    // Incremente le diviseur test premier
+    b       prime_loop_start
+
+not_prime:
+    mov     x24, 0    // Set flag a 0 (non-prime) et continue la boucle externe
+    b       input_loop_increment
+
+check_prime:
+    cbz     x24, input_loop_increment
     add     x21, x21, 1    // ++Total de nombre premier sinon skip
 
-skip_primecount:
+input_loop_increment:
     // Incrementation et test de fin de boucle
     add     x19, x19, 1
+    
     cmp     x19, x20    
     b.eq    end
-    b       loop_input_range
+    b       input_loop_start
+
+
 
 // "Filter" si les nombres sont premiers, compter
 
@@ -68,8 +86,13 @@ skip_primecount:
 end:
     // Fin
     adr     x0, fmtStrOut
-    adr     x1, msgOut
+    adr     x1, msgSep
     bl      printf
+    
+    adr     x0, fmtLuOut
+    mov     x1, x21    // Prime count
+    bl      printf
+
     mov     x0, 0
     bl      exit
 
