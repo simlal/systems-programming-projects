@@ -8,7 +8,7 @@ main:
     adr     x1, msgInput
     bl      printf
 
-inputs:
+temp_inputs:
     mov     x19, 2
     mov     x20, 30
 //inputs:
@@ -36,48 +36,54 @@ print_inputs:
     bl      printf
 
 initialisation:
-    mov     x21, 0    // Total prime num
-    add     x20, x20, 1    // Pour ele final dans boucle
+    mov     x21, 0                          // Total prime num
+    add     x20, x20, 1                     // Loop finale dans boucle dernier ele
 
-// Loop entre x19 et x20 pour avoir la liste des entiers
+// Outer loop entre x19 et x20 pour avoir la liste des entiers
 input_loop_start:
-    mov     x22, 2    // Init iterateur pour division premier
-    mov     x24, 1    // Flag pour nb premier (1 == prime)
+    mov     x22, 2                          // Iterateur pour division premier
+    mov     x24, 1                          // Flag pour nb premier (1 == prime)
+    udiv    x25, x19, x22                   // Reduction boucle premier (n/2 == n)     
 
 prime_loop_start:
-    cmp     x22, x19    // Valide si on sort de boucle prime
-    b.ge    check_prime    // et flag prime a ete modif
+    cmp     x22, x25                        // Valide si on sort de boucle prime
+    b.gt    check_prime                     // et flag prime a ete modif
 
     udiv    x23, x19, x22    
-    msub    x23, x22, x23, x19    // x23 remainder = (divisor*quotient) - dividend
+    msub    x23, x22, x23, x19              // x23 remainder = (divisor*quotient) - dividend
     
-    //adr     x0, fmtLuOut
-    //mov     x1, x19
-    //bl      printf
+    // Si remainder != 0, skip au prochain int a tester
     cbz     x23, not_prime
 
-    add     x22, x22, 1    // Incremente le diviseur test premier
+    // Incremente le diviseur test premier
+    add     x22, x22, 1
     b       prime_loop_start
 
+// Set flag a 0 (non-prime) et continue la boucle externe
 not_prime:
-    mov     x24, 0    // Set flag a 0 (non-prime) et continue la boucle externe
+    mov     x24, 0
     b       input_loop_increment
 
+// Fin de boucle premier
 check_prime:
     cbz     x24, input_loop_increment
-    add     x21, x21, 1    // ++Total de nombre premier sinon skip
+    add     x21, x21, 1                     // ++Total de nombre premier sinon skip
 
+// Incrementation liste int et test de fin de boucle
 input_loop_increment:
-    // Incrementation et test de fin de boucle
+    adr     x0, fmtLuOut
+    mov     x1, x19
+    bl      printf
+
+    adr     x0, fmtLuOut
+    mov     x1, x25
+    bl      printf
+
     add     x19, x19, 1
     
-    cmp     x19, x20    
+    cmp     x19, x20                        // Fin outer loop liste de int
     b.eq    end
     b       input_loop_start
-
-
-
-// "Filter" si les nombres sont premiers, compter
 
 // Palindrome check, compter
 
