@@ -86,7 +86,7 @@ echo -e "Executing binary ./$bin_name...\n"
 ./$bin_name
 
 if [[ $? -ne 0 ]]; then
-    echo "Error at runtime :(. Verify your code!"
+    echo "Error at runtime :( Go back and verify your code!"
     exit 1
 fi
 echo "Done executing ./$bin_name without errors :)"
