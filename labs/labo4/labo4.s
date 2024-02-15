@@ -92,11 +92,39 @@ num_occ_ret:                            //
                                         // }
                                         //
 /*******************************************************************************
-  Entrée: tableau d'entiers de 64 bits, taille n > 0 du tableau
+  Entrée: tableau d'entiers de 64 bits (x0), taille n > 0 du tableau (x1)
   Sortie: un mode du tableau
-  Usage:  ...
+  Usage:  x19 -- n    x20 --  tab     x21 -- *tab 
 *******************************************************************************/
 mode:                                   // long mode(long tab[], long n)
-    /*                                  // {
-        CODE À COMPLÉTER                //
-                          */            // }
+        SAVE                            // {
+        mov     x19, x1                 //  
+        mov     x25, x1                 //   // copie pour compteur n; 
+        mov     x20, x0                 //   long *tab = tab;
+        mov     x21, x0                 //   iterator i = tab.begin();
+        mov     x22, 0                  //   long maxCount = 0;
+        mov     x23, 0                  //   long mode = 0;
+        
+mode_boucle:
+        cbz     x25, mode_ret            //   while (n != 0)
+                                        //   {
+        mov     x0, x20                 //     // x0 = tab
+        mov     x1, x19                 //     // x1 = n
+        ldr     x2, [x21]               //     long x = *tab[i]
+        bl      num_occ                 //     
+        mov     x24, x0                 //     long num_x = num_occ(tab, n, x);
+
+        cmp     x24, x22                //     if (num_x > maxCount)
+        b.le    mode_prochain           //     {
+        mov     x22, x24                //       maxCount = num_x;
+        mov     x23, x2                 //       mode = x;
+                                        //     }
+mode_prochain:
+        sub     x25, x25, 1             //     n--;
+        add     x21, x21, 8             //     i++;
+        b       mode_boucle             //   }
+
+mode_ret:
+        mov     x0, x23                 //   return maxValue;
+        RESTORE                         //
+        ret                             // }                    
