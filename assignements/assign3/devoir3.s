@@ -51,7 +51,7 @@ mem_init:
     mov     x21, x20    // Copie pour incrementation                         
 // Init a 0 pour chaque element de mem
 mem_loop_init:
-    cbz     x23, end               
+    cbz     x23, start_input_ops               
     str     x22, [x21]                        
     add     x21, x21, 8
     str     x22, [x21]
@@ -68,13 +68,34 @@ mem_loop_init:
     b       mem_loop_init
 
 // ###### Entrer dans boucle d'execution ###### // 
-// TODO
+start_input_ops:
+    // Chercher les entrees pour les operations
+    adr     x0, fmtOpeIn
+    adr     x1, ope
+    bl      scanf
+    ldr     x21, ope        // x21=operation1
+
+    adr     x0, fmtOpeIn
+    adr     x1, ope
+    bl      scanf
+    ldr     x22, ope        // x22=operation2
+
+    // Test des entrees printf
+    adr     x0, fmtOpeOut
+    mov     x1, x21
+    bl      printf
+
+    adr     x0, fmtOpeOut
+    mov     x1, x22
+    bl      printf
+    
+
+    // Logique 'Switch case' pour comparer les 
 
 end:
     mov     x0, 0
     bl      exit
 
-// ###### Ss-programme pour affichage d'un element ###### //
 
 // Affichage print_calc_ele(x0=format-type, x1=adresse-data, x2=indice)
 print_calc_ele:
@@ -104,10 +125,13 @@ call_printf:
     ret
 
 .section ".bss"
-                .align  16
+                .align  8
 acc:            .skip   16
 mem:            .skip   64                              //(16*4)
+ope:            .skip   8       // long unsigned int 64 bits
 
 .section ".rodata"
 fmtAcc:         .asciz  "acc:    %016lX %016lX\n"
 fmtMem:         .asciz  "mem[%lu]: %016lX %016lX\n"
+fmtOpeIn:       .asciz  "%lu"
+fmtOpeOut:      .asciz  "%lu\n"
