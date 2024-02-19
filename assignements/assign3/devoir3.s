@@ -88,6 +88,11 @@ scan_input:
     bl      scanf
     ldr     x21, ope                    // operation i=x21
 
+    // Valide si op == 5 pour terminer hativement
+    mov     x23, 5
+    cmp     x21, x23
+    b.eq    end
+
     // Chercher effet 'j'
     adr     x0, fmtOpeIn
     adr     x1, ope
@@ -115,7 +120,7 @@ eval_op1:
     cmp     x21, x23
     b.ne    eval_op2
 
-    // Copie adresses de acc meme
+    // Copie adresses de acc mem
     mov     x23, x19
     mov     x24, x20
     // Chercher adresse de mem[j]
@@ -134,7 +139,102 @@ eval_op1:
 
     b       calc_loop_start
 
+// Operation i=2 avec effet: acc <- mem[j]
 eval_op2:
+    mov     x23, 2
+    cmp     x21, x23
+    b.ne    eval_op3
+
+    // Copie adresses de acc mem
+    mov     x23, x19
+    mov     x24, x20
+    // Chercher adresse de mem[j]
+    mov     x25, 16                     // Saut de 16 bytes
+    mul     x22, x22, x25
+    add     x24, x24, x22               // Deplacer vers debut de mem[j]
+    
+    // Charger valeur de mem[j] dans acc
+    ldr     x25, [x24]
+    str     x25, [x23]                  // Copie registre mem[j]-low dans acc-low
+    
+    add     x23, x23, 8                 // Avance dans acc-hi
+    add     x24, x24, 8                 // Avance dans mem[j]-hi
+    ldr     x25, [x24]
+    str     x25, [x23]                  // Copie mem[j]-hi dans acc-hi
+
+    b       calc_loop_start
+
+// Operation i=3 avec effet: mem[j] <- mem[j] + acc
+eval_op3:
+    mov     x23, 3
+    cmp     x21, x23
+    b.ne    eval_op4
+
+    // Copie adresses de debut-acc (x19) debut-mem (x20)
+    mov     x23, x19
+    mov     x24, x20
+    // Chercher adresse de mem[j]
+    mov     x25, 16                     // Saut de 16 bytes
+    mul     x22, x22, x25
+    add     x24, x24, x22               // Deplacer vers debut de mem[j]
+    
+    // Extraire valeurs *acc-1/2 et *mem[j]-1/2
+    ldr     x1, [x23]
+    ldr     x3, [x24]
+    
+    add     x23, x23, 8
+    add     x24, x24, 8
+    ldr     x2, [x23]
+    ldr     x4, [x24]
+    
+    // Additions de mem[j] + acc
+    adds    x25, x1, x3                 // Additions reg poids faibles (report si overflow)
+    adc     x26, x2, x4                 // Additions reg poids fort (aj du report au besoin)
+
+    // Remplacement de resultat addition dans mem[j]
+    str     x26, [x24]
+    sub     x24, x24, 8                 // Recule vers mem[j]-low
+    str     x25, [x24]
+
+    b       calc_loop_start
+
+// Operation i=4 avec effet: mem[j] <- mem[j] - acc
+eval_op4:
+    mov     x23, 4
+    cmp     x21, x23
+    b.ne    eval_op_default
+
+    // Copie adresses de debut-acc (x19) debut-mem (x20)
+    mov     x23, x19
+    mov     x24, x20
+    // Chercher adresse de mem[j]
+    mov     x25, 16                     // Saut de 16 bytes
+    mul     x22, x22, x25
+    add     x24, x24, x22               // Deplacer vers debut de mem[j]
+    
+    // Extraire valeurs *acc-1/2 et *mem[j]-1/2
+    ldr     x1, [x23]
+    ldr     x3, [x24]
+    
+    add     x23, x23, 8
+    add     x24, x24, 8
+    ldr     x2, [x23]
+    ldr     x4, [x24]
+    
+    // Soustraction de mem[j] - acc
+    subs    x25, x3, x1                 // Soustraction reg poids faibles (emprunt si underflow)
+    sbc     x26, x4, x2                 // Soustraction reg poids forts (soustrait l'emprunt au besoin)
+
+    // Remplacement de resultat addition dans mem[j]
+    str     x26, [x24]
+    sub     x24, x24, 8                 // Retour de vers mem[j]-low
+    str     x25, [x24]
+
+    b       calc_loop_start
+
+eval_op_default:
+    b       end
+
 
 end:
     mov     x0, 0
