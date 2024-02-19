@@ -78,13 +78,19 @@ print_mem_loop:
     add     x24, x24, 1                 // i++
     b       print_mem_loop
 
-// Chercher operateur avec entree clavier dans x21 (i)
+//  Chercher code + op/effet avec entree (i=x21) et effet (j=x22)
 scan_input:
     adr     x0, fmtOpeIn
     adr     x1, ope
     bl      scanf
     ldr     x21, ope                    // operation i=x21
 
+    // Chercher effet 'j'
+    adr     x0, fmtOpeIn
+    adr     x1, ope
+    bl      scanf
+    ldr     x22, ope                    // effet j=x22
+    
     // Test des entrees printf
     //adr     x0, fmtOpeOut
     //mov     x1, x21
@@ -92,17 +98,10 @@ scan_input:
 
 // ###### Logique 'switch case' pour choisir l'operation (i) a faire et entree (j) a appliquer
 
-// Operation i=0 avec effet: acc <- i
+// Operation i=0 avec effet: acc <- j
 eval_op0:
-    mov     x23, 0
-    cmp     x21, x23
+    cmp     x21, xzr
     b.ne    eval_op1
-    
-    // Chercher effet 'j'
-    adr     x0, fmtOpeIn
-    adr     x1, ope
-    bl      scanf
-    ldr     x22, ope                    // effet j=x22
 
     // Charger la valeur de j a l'adresse pointee en memoire par acc
     str     x22, [x19]
@@ -112,8 +111,18 @@ eval_op0:
 
     b       calc_loop_start
 
+// Operation i=1 avec effet: mem[j] <- acc
 eval_op1:
+    mov     x23, 1
+    b.ne    eval_op2
 
+    // Chercher effet 'j'
+    adr     x0, fmtOpeIn
+    adr     x1, ope
+    bl      scanf
+    ldr     x22, ope                    // effet j=x22
+    
+eval_op2:
 
 end:
     mov     x0, 0
