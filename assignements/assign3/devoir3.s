@@ -64,18 +64,21 @@ calc_loop_start:
 
 // Affichage mem (pMem=x20) avec boucle
 print_mem_init:
-    mov     x23, 4                      // n=4
-    mov     x24, 0                      // compteur i=0                           
+    mov     x21, x20                    // Facilite reset *p apres sortie de boucle incrementation                         
+    mov     x22, 4                      // n=4
+    mov     x23, 0                      // compteur i=0                           
 
 print_mem_loop:
-    cbz     x23, scan_input
+    cbz     x22, scan_input
     adr     x0, fmtMem
-    mov     x1, x20
-    mov     x2, x24                     
+    mov     x1, x21
+    mov     x2, x23                     
     bl      print_calc_ele
+
+    add     x21, x21, 16                // mem[i+1] de 128 bits
+    sub     x22, x22, 1                 // n--
+    add     x23, x23, 1                 // i++
     
-    sub     x23, x23, 1                 // n--
-    add     x24, x24, 1                 // i++
     b       print_mem_loop
 
 //  Chercher code + op/effet avec entree (i=x21) et effet (j=x22)
@@ -91,11 +94,6 @@ scan_input:
     bl      scanf
     ldr     x22, ope                    // effet j=x22
     
-    // Test des entrees printf
-    //adr     x0, fmtOpeOut
-    //mov     x1, x21
-    //bl      printf
-
 // ###### Logique 'switch case' pour choisir l'operation (i) a faire et entree (j) a appliquer
 
 // Operation i=0 avec effet: acc <- j
@@ -114,19 +112,38 @@ eval_op0:
 // Operation i=1 avec effet: mem[j] <- acc
 eval_op1:
     mov     x23, 1
+    cmp     x21, x23
     b.ne    eval_op2
 
-    // Chercher effet 'j'
-    adr     x0, fmtOpeIn
-    adr     x1, ope
-    bl      scanf
-    ldr     x22, ope                    // effet j=x22
+    // Copie adresses de acc meme
+    mov     x23, x19
+    mov     x24, x20
+    // Chercher adresse de mem[j]
+    mov     x25, 16                     // Saut de 16 bytes
+    mul     x22, x22, x25
+    add     x24, x24, x22               // Deplacer vers debut de mem[j]
     
+    // Charger valeur de acc dans mem
+    ldr     x25, [x23]
+    str     x25, [x24]                  // Copie registre acc-1 dans mem[j]-1
+    
+    add     x23, x23, 8                 // Avance dans acc-2
+    ldr     x25, [x23]
+    add     x24, x24, 8                 // Avance dans mem[j]-2
+    str     x25, [x24]                  // Copie acc-2 dans mem[j]-2
+
+    b       calc_loop_start
+
 eval_op2:
 
 end:
     mov     x0, 0
     bl      exit
+
+ // Test print debug
+    //adr     x0, fmtOpeOut
+    //mov     x1, x21
+    //bl      printf
 
 
 // Affichage print_calc_ele(x0=format-type, x1=adresse-data, x2=indice)
