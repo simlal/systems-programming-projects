@@ -86,7 +86,7 @@ scan_input:
     adr     x0, fmtOpeIn
     adr     x1, ope
     bl      scanf
-    ldr     x21, ope                    // operation i=x21
+    ldr     x21, ope                    // Garder code operation i=x21
 
     // Valide si op == 5 pour terminer hativement
     mov     x23, 5
@@ -97,7 +97,7 @@ scan_input:
     adr     x0, fmtOpeIn
     adr     x1, ope
     bl      scanf
-    ldr     x22, ope                    // effet j=x22
+    ldr     x22, ope                    // Garder var effet j=x22
     
 // ###### Logique 'switch case' pour choisir l'operation (i) a faire et entree (j) a appliquer
 
@@ -232,21 +232,16 @@ eval_op4:
 
     b       calc_loop_start
 
+// default pour switch case
 eval_op_default:
     b       end
-
 
 end:
     mov     x0, 0
     bl      exit
 
- // Test print debug
-    //adr     x0, fmtOpeOut
-    //mov     x1, x21
-    //bl      printf
-
-
-// Affichage print_calc_ele(x0=format-type, x1=adresse-data, x2=indice)
+// ss-prog affichage print_calc_ele
+// Usage: print_calc_ele(x0=format-type, x1=adresse-data, x2=indice)
 print_calc_ele:
     SAVE
     
