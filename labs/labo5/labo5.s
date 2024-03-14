@@ -53,63 +53,67 @@ dechiffrer:
     mov     w23, w4
     mov     w24, w5
     ldr     w25, delta                // la constante magique     
-    mov     w26, 0                    // compteur i
+    mov     w26, 1                    // compteur i
 
 boucle:
     cmp     w26, 32
-    b.ge    fin_boucle
+    b.gt    fin_boucle
     
     // print le compteur pour debug
-    adr     x0, fmtPrintInt
-    mov     w1, w26
-    bl      printf
-    // print w0/w1 pour debug
-    adr     x0, fmtSortie       
-    mov     w1, w19             
-    mov     w2, w20             
-    bl      printf
+    //adr     x0, fmtPrintInt
+    //mov     w1, w26
+    //bl      printf
+    //// print w0/w1 pour debug
+    //adr     x0, fmtSortie       
+    //mov     w1, w19             
+    //mov     w2, w20             
+    //bl      printf
 
     // op lsl4 et somme avec w4
     lsl     w27, w19, 4             // w27 reg temp de calcul
-    add     w23, w23, w27           // Res pour futur xor dans w23
+    add     w28, w23, w27           // Res pour futur xor dans w28
 
     // op mul/sub cstMagique=i avec somme w0-init
     mov     w27, 33
     sub     w27, w27, w26
-    mul     w28, w27, w25           
-    add     w28, w28, w19           // Res futur-xor dans w28
+    mul     w27, w27, w25           
+    add     w27, w27, w19           // Res futur-xor dans w27
+
+    // Resultat 1er-xor 2-voies
+    eor     w28, w27, w28           // res xor-2voies=w28
 
     // op w0-init lsr5 et somme w5
     lsr     w27, w19, 5
-    add     w24, w24, w27           // Res futur-xor dans w24
-
-    // Resultat xor 3-voies
-    eor     w23, w23, w28
-    eor     w23, w23, w24
+    add     w27, w24, w27           // Res futur-xor dans w27
+    
+    // Resultat dernier xor
+    eor     w27, w27, w28           // res dernier-xor=w27
 
     // soustraction w1-init et xor-res
-    sub     w20, w20, w23           // ecrasement w1-mod = w20
+    sub     w20, w20, w27           // ecrasement w1-mod = w20
 
     // w1-mod lsl4 et somme w2
     lsl     w27, w20, 4
-    add     w21, w21, w27           // Res futur-xor w21
+    add     w28, w21, w27           // Res pour futur xor w28
 
     // op mul/sub cstMagique=i avec somme w1-mod
     mov     w27, 33
     sub     w27, w27, w26
-    mul     w28, w27, w25           
-    add     w28, w28, w20           // Res futur-xor dans w28
+    mul     w27, w27, w25           
+    add     w27, w27, w20           // Res futur-xor dans w27
 
+    // Resultat 1er-xor 2-voies
+    eor     w28, w27, w28           // res xor-2voies=w28
+    
     // op w1-mod lsr5 et somme w3
     lsr     w27, w20, 5
-    add     w22, w22, w27           // Res futur-xor dans w22
+    add     w27, w22, w27           // Res futur-xor dans w27
 
-    // Resultat xor 3-voies
-    eor     w21, w21, w28
-    eor     w21, w21, w22
+    // Resultat dernier xor
+    eor     w27, w27, w28           // res dernier-xor=w27
 
     // soustraction w0-init avec xor-3voies
-    sub     w19, w19, w21
+    sub     w19, w19, w27
 
     // Incrementation + retour de boucle
     add     w26, w26, 1
