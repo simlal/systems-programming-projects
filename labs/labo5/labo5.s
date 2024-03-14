@@ -53,16 +53,66 @@ dechiffrer:
     mov     w23, w4
     mov     w24, w5
     ldr     w25, delta                // la constante magique     
-    mov     x26, 0                    // compteur i
+    mov     w26, 0                    // compteur i
 
 boucle:
-    cmp     x26, 32
+    cmp     w26, 32
     b.ge    fin_boucle
+    
+    // print le compteur pour debug
     adr     x0, fmtPrintInt
-    mov     x1, x26
+    mov     w1, w26
+    bl      printf
+    // print w0/w1 pour debug
+    adr     x0, fmtSortie       
+    mov     w1, w19             
+    mov     w2, w20             
     bl      printf
 
-    add     x26, x26, 1
+    // op lsl4 et somme avec w4
+    lsl     w27, w19, 4             // w27 reg temp de calcul
+    add     w23, w23, w27           // Res pour futur xor dans w23
+
+    // op mul/sub cstMagique=i avec somme w0-init
+    mov     w27, 33
+    sub     w27, w27, w26
+    mul     w28, w27, w25           
+    add     w28, w28, w19           // Res futur-xor dans w28
+
+    // op w0-init lsr5 et somme w5
+    lsr     w27, w19, 5
+    add     w24, w24, w27           // Res futur-xor dans w24
+
+    // Resultat xor 3-voies
+    eor     w23, w23, w28
+    eor     w23, w23, w24
+
+    // soustraction w1-init et xor-res
+    sub     w20, w20, w23           // ecrasement w1-mod = w20
+
+    // w1-mod lsl4 et somme w2
+    lsl     w27, w20, 4
+    add     w21, w21, w27           // Res futur-xor w21
+
+    // op mul/sub cstMagique=i avec somme w1-mod
+    mov     w27, 33
+    sub     w27, w27, w26
+    mul     w28, w27, w25           
+    add     w28, w28, w20           // Res futur-xor dans w28
+
+    // op w1-mod lsr5 et somme w3
+    lsr     w27, w20, 5
+    add     w22, w22, w27           // Res futur-xor dans w22
+
+    // Resultat xor 3-voies
+    eor     w21, w21, w28
+    eor     w21, w21, w22
+
+    // soustraction w0-init avec xor-3voies
+    sub     w19, w19, w21
+
+    // Incrementation + retour de boucle
+    add     w26, w26, 1
     b       boucle 
 
 
