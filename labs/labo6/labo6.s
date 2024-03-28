@@ -55,12 +55,59 @@ main_fin_boucle:                    //
   Entrée: adresse d'un tableau de nombres en virgule flottante double précision
           nombre d'éléments du tableau
   Sortie: écart-type des éléments du tableau (en tant que population)
-  Usage:  ...
+  Usage:  x0 - tab (copie dans x20)
+          x1 - n (copie dans x19)
+          x21 - i
+          d8 - moyenne
+          d9 - acc
+          d10 - val 
 *******************************************************************************/
 ecart_type:
-  /*
-    CODE À COMPLÉTER
-  */
+    // Preserve les registres de l'appelant
+    stp     x29, x30, [sp, -80]!    
+    mov     x29, sp                 
+    stp     x19, x20, [sp, 16]      
+    stp     x21, xzr,  [sp, 32]
+    stp     d8, d9,   [sp, 48]      
+    stp     d9, d10,  [sp, 64]      
+    
+
+    // Chercher notes et moyenne pour appel moyenne
+    mov     x20, x0         // x20: notes[n]
+    mov     x19, x1         // x19: n (len(notes)
+    bl      moyenne
+    fmov    d8, d0          // d8: moyenne
+
+    // Calculer ecart type             
+    mov     x21, 0          // compteur i                      
+    fmov    d9, xzr         // accumulateur a 0        
+et_boucle:                     
+    cmp     x21, x19                 
+    b.hs    mult_racine             
+    
+    // Chercher notes[i] ou *(notes + (x19 * sizeof(long)))                                    
+    ldr     d10, [x20, x21, lsl 3]        
+    // Operations sur la note et accumulation
+    fsub    d10, d10, d8
+    fmul    d10, d10, d10              
+    fadd    d9, d9, d10
+                                    
+    add     x21, x21, 1             
+    b       et_boucle
+// Division par n et racine carre
+mult_racine:
+    ucvtf   d10, x19         // cast float(n)
+    fdiv    d9, d9, d10      
+    fsqrt   d0, d9
+
+    // Restaurer les registres appelant
+    ldp     x19, x20, [sp, 16]
+    ldp     x21, xzr, [sp, 32]
+    ldp     d8, d9, [sp, 48]
+    ldp     d9, d10, [sp, 64]
+    ldp     x29, x30, [sp], 80
+
+    ret
 
 /*******************************************************************************
   Entrée: adresse d'un tableau de nombres en virgule flottante double précision
