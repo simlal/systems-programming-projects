@@ -14,6 +14,8 @@ function parse_git_branch {
 
 export PS1="\[\033[34m\]\u@\h\[\033[00m\]:${debian_chroot:+($debian_chroot)}\[\033[32m\]\$(basename \"\w\")\[\033[33m\]\$(parse_git_branch)\[\033[00m\]$ "
 
+export PATH="$PATH:$HOME/custom_bins/"
+
 # You may uncomment the following lines if you want `ls' to be colorized:
 # export LS_OPTIONS='--color=auto'
 # eval "`dircolors`"
