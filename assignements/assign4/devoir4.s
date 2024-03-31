@@ -110,10 +110,12 @@ retour_taille:
     RESTORE
     ret
     
-//**************** Operation 1: Taille de chaine ****************//
+//**************** Operation 1: Casses et substitutions ****************//
 // Recoit x0: char* tabChar sous format ASCII (chaque char sur 1byte)
 // x20: int taille
 // w21: char en position actuelle
+// w22: operation arithmetique sur char actuel ASCII
+// w23: char pour swap au besoin
 operation1:
     SAVE
 
@@ -204,9 +206,76 @@ retour_leet:
     RESTORE
     ret
 
-//**************** Operation 2: Taille de chaine ****************//
+//**************** Operation 2: Hex-vers-Dec ****************//
+// Recoit x0: char* tabChar sous format ASCII (1byte/char) commence tjrs par 0x
+// x19: copie de x0 tabChar
+// x20: index pour iteration inverse de la chaine SANS '0x'
+// x21: qte bits de poids faible SANS '0x'
+// x22: accumulateur pour conversion decimal
+// w23: char en position actuel (a l'inverse)
+// x24: init pour exposant 16
+// x25 copie position x21
 operation2:
     SAVE
+
+// Initialisation et skip '0x'
+    mov     x19, x0     // char* tabAscii
+    mov     x20, 0      // int i = 0 pour indexage inverse
+    mov     x21, 0      // int position bit poids faible = 0
+    mov     x22, 0      // int acc = 0
+
+    add     x19, x19, 2
+
+// Boucle calcul de taille pour index
+boucle_taille_op2:
+    ldrb    w23, [x19]
+    cbz     w23, reset_index_string_hex        
+    add     x20, x20, 1
+    add     x19, x19, 1
+    b       boucle_taille_op2
+
+reset_index_string_hex:
+    sub     x19, x19, x20
+
+// Lecture a partir de la fin en fct de la taille
+boucle_lecture_inverse:
+    cbz     x20, retour_hex_dec     // index == 0 donc fin de lecture inverse
+    sub     x20, x20, 1     // --i
+    ldrb    w23, [x19, x20]     // Lire char en position actuel a l'inverse
+
+    // Check 0-9 vs A-F
+    cmp     w23, 65
+    b.lt    conv_chiffres
+    
+    sub     w23, w23, 55        // Conversion lettre A-F en hex ascii vers decimal
+    b       init_calcul_exposant
+
+conv_chiffres:
+    sub     w23, w23, 48        // Conversion chiffres 0-9 vers dec
+
+// Somme (chiffre-pos * 16 ^ position) avec boucle
+init_calcul_exposant:
+    mov     x24, 1 
+    mov     x25, x21        // Copie pour calcul exposant
+    cbz     x25, ajout_accumulateur    // Skip pour premiere position
+
+boucle_calcul_exposant:
+    lsl     x24, x24, 4     // Multiplier par 16
+    sub     x25, x25, 1     // exposant--
+    cbnz    x25, boucle_calcul_exposant
+
+ajout_accumulateur:
+    uxth    x23, w23        // Etendre sur 64 bits
+    mul     x24, x24, x23       // 16**pos * charActuelEnInt
+    add     x22, x22, x24
+
+    add     x21, x21, 1     // Increment exposant
+    b       boucle_lecture_inverse
+
+retour_hex_dec:
+    adr     x0, fmtOutInt
+    mov     x1, x22
+    bl      printf
 
     RESTORE
     ret
