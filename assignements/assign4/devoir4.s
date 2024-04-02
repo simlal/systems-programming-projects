@@ -280,9 +280,93 @@ retour_hex_dec:
     RESTORE
     ret
 
-//**************** Operation 3: Taille de chaine ****************//
+//**************** Operation 3: Bin-vers-Dec ****************//
+// Recoit x0: char* tabChar sous format ASCII (1byte/char) commence tjrs par 0b
+// x19: copie de x0 tabChar
+
 operation3:
     SAVE
+
+    // Initialisation et skip '0x'
+    mov     x19, x0     // char* tabAscii
+    mov     x20, 0      // int i = 0 pour indexage inverse
+    mov     x21, 0      // int position bit poids faible = 0
+    mov     x22, 0      // int acc = 0
+
+    ldrb    w25, [x19, 2]!      // char bitSigne avec *(tabAscii + 2) pre-increm
+
+
+// Boucle calcul de taille pour index et iteration inverse
+boucle_taille_op3:
+    ldrb    w23, [x19]
+    cbz     w23, reset_index_string_bin        
+    add     x20, x20, 1
+    add     x19, x19, 1
+    b       boucle_taille_op3
+
+reset_index_string_bin:
+    sub     x19, x19, x20
+
+
+// Lecture a partir de la fin en fct de la taille
+boucle_lecture_inverse_op3:
+    cbz     x20, conversion_signe     // index == 0 donc fin de lecture inverse
+    sub     x20, x20, 1     // --i
+    ldrb    w23, [x19, x20]     // char valeurBit = tabAscii[i]
+
+    // Complement ou non en fonction de bite de signe
+    cmp     w25, 49     // bitSigne == 1 ?
+    b.ne    conversion_chiffres_op3       // *(tablAscii + 2) != 1 donc entier non-signe
+    
+    // Faire le complement pour nb negatif
+    cmp     w23, 49
+    b.ne    avant_complement_zero
+    mov     w23, 48     // if tabAscii[i] == 1 -> tabAscii[i] = 0
+    b       conversion_chiffres_op3
+
+avant_complement_zero:
+    mov     w23, 49     // else tabAscii[i] = 1 (donc 0 avant)
+
+conversion_chiffres_op3:
+    sub     w23, w23, 48
+    
+// Somme (chiffre-pos * 2 ^ position) avec boucle
+init_calcul_exposant_op3:
+    mov     x24, 1 
+    mov     x26, x21        // Copie pour calcul exposant
+    cbz     x26, ajout_accumulateur_op3    // Skip pour premiere position
+
+boucle_calcul_exposant_op3:
+    lsl     x24, x24, 1     // Multiplier par 2
+    sub     x26, x26, 1     // exposant--
+    cbnz    x26, boucle_calcul_exposant_op3
+
+ajout_accumulateur_op3:
+    uxth    x23, w23        // Etendre sur 64 bits
+    mul     x24, x23, x24       // 2^position * valeurBit
+    add     x22, x22, x24
+
+    add     x21, x21, 1     // Increment exposant
+    b       boucle_lecture_inverse_op3
+
+// Soustraire 1 et faire la negation de l'accumulateur
+conversion_signe:
+    cmp     w25, 49
+    b.ne    retour_bin_dec_pos
+    add     x22, x22, 1
+    neg     x22, x22
+
+    adr     x0, fmtOutSignedInt
+    mov     x1, x22
+    bl      printf
+    b       fin_op3
+
+retour_bin_dec_pos:
+    adr     x0, fmtOutInt
+    mov     x1, x22
+    bl      printf
+
+fin_op3:
 
     RESTORE
     ret
@@ -310,12 +394,13 @@ numOp:      .skip   8
 
 .section ".rodata"
 // Format pour lire une chaîne de caractères d'une ligne (incluant des espaces)
-fmtLecture:     .asciz  "%[^\n]s"
+fmtLecture:             .asciz  "%[^\n]s"
 // Formattage pour I/O uint
-fmtInUint:      .asciz  "%u"
-fmtOutInt:      .asciz  "%u\n"
+fmtInUint:              .asciz  "%u"
+fmtOutInt:              .asciz  "%u\n"
+fmtOutSignedInt:        .asciz  "%d\n"
 
 
 // Message d'erreur operation
-fmtOutMsg:      .asciz  "%s\n"
-MsgError:       .asciz  "Erreur! Entrer un code d'operation entre 0 et 5."
+fmtOutMsg:              .asciz  "%s\n"
+MsgError:               .asciz  "Erreur! Entrer un code d'operation entre 0 et 5."
