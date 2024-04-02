@@ -283,6 +283,14 @@ retour_hex_dec:
 //**************** Operation 3: Bin-vers-Dec ****************//
 // Recoit x0: char* tabChar sous format ASCII (1byte/char) commence tjrs par 0b
 // x19: copie de x0 tabChar
+// x20: index pour iteration inverse de la chaine SANS '0b'
+// x21: qte bits de poids faible SANS '0b'
+// x22: accumulateur pour conversion decimal
+// w23: char en position actuel (a l'inverse)
+// x24: init pour exposant 2
+// w25: bit de signe
+// x26 copie position x21
+
 
 operation3:
     SAVE
@@ -371,9 +379,58 @@ fin_op3:
     RESTORE
     ret
     
-//**************** Operation 4: Taille de chaine ****************//
+//**************** Operation 4: Chiffrement par decalage ****************//
+// Recoit x0: char* tabChar sous format ASCII avec lettres MAJ et [, \, ou ]
+// x19: copie de x0 tabChar
+
 operation4:
     SAVE
+
+    // Initialisation
+    mov     x19, x0     // char* tabAscii
+    mov     x20, 0      // uint taille = 0
+
+    // Boucle iteration debut vers fin
+boucle_op4:
+    ldrb    w21, [x19, x20]      // char currentChar = *tabAscii
+    cbz     w21, retour_chiffrement
+
+// Decalage circulaire 5 bits-pf vers la droite sur 32bits
+// Simule decalage 2 vers la gauche et 3 vers la droite
+ss_op4_ii:
+    and     w22, w21, 0b00011111        // Sauvegarde 5 dernier bits pf
+    lsl     w23, w22, 2                 // Decale 2 pos vers la gauche
+    lsr     w22, w22, 3                 // Decale 3 pos vers la droite
+    orr     w22, w22, w23               // On combine les 2 decalages
+    bic     w21, w21, 0b00011111        // Efface 5 bits-pf sur original
+    orr     w21, w21, w22               // Ajoute les 5 bits-pf decalés avec w22 comme masque
+    b       increm_chiffrement
+
+    // Decalage circulaire de 7 positions vers l'arriere
+ss_op4_i:
+    cmp     w21, 91
+    b.ge    increm_chiffrement      // currentChar post-transfo (i) n'est pas une lettre
+
+    mov      w22, 71     // limite de 'G' pour decalage circulaire
+    cmp     w21, w22
+    b.le    skip_circ
+
+    // Decalage de 7 pos vers l'arriere
+    sub     w21, w21, 7
+    b       increm_chiffrement
+skip_circ:
+    add     w21, w21, 19
+
+increm_chiffrement:
+    strb    w21, [x19, x20]       // *tabAscii = currentChar
+    add     x20, x20, 1     // taille++
+    b       boucle_op4
+
+retour_chiffrement:
+
+    adr     x0, fmtOutMsg
+    mov     x1, x19
+    bl      printf
 
     RESTORE
     ret
@@ -381,6 +438,7 @@ operation4:
 //**************** Operation 5: Taille de chaine ****************//
 operation5:
     SAVE
+
 
     RESTORE
     ret
