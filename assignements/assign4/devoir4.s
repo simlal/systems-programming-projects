@@ -382,6 +382,10 @@ fin_op3:
 //**************** Operation 4: Chiffrement par decalage ****************//
 // Recoit x0: char* tabChar sous format ASCII avec lettres MAJ et [, \, ou ]
 // x19: copie de x0 tabChar
+// x20: taille de la chaine pour iteration
+// w21: char en position actuelle
+// w22: char temp pour operations de decalage
+// w23: char temp pour operations de decalage
 
 operation4:
     SAVE
@@ -411,7 +415,7 @@ ss_op4_i:
     cmp     w21, 91
     b.ge    increm_chiffrement      // currentChar post-transfo (i) n'est pas une lettre
 
-    mov      w22, 71     // limite de 'G' pour decalage circulaire
+    mov     w22, 71     // limite de 'G' pour decalage circulaire
     cmp     w21, w22
     b.le    skip_circ
 
@@ -435,14 +439,101 @@ retour_chiffrement:
     RESTORE
     ret
     
-//**************** Operation 5: Taille de chaine ****************//
+//**************** Operation 5: Permutations ****************//
+// Ne fonctionne pas, mais tente de s'inspirer d'une version python
+//def permute(to_permute):
+//    if len(to_permute) == 0:
+//        return []
+//    elif len(to_permute) == 1:
+//        return [to_permute]    // liste de 1 string
+//    else:
+//        permutations = [] 
+//        for i in range(len(to_permute)):
+//            char_actuel = to_permute[i]
+//            to_permute_raccourci = to_permute[:i] + s[i+1:]
+//            for perm_raccourci in permute(to_permute_raccourci):
+//                permutations.append(char_actuel + perm_raccourci)   // Ajout de char_actuel + perm_raccourci
+//        return permutations
+
+// Recoit x0: char* tabChar sous format ASCII sans repetitions
+// x19: copie de x0 tabChar
 operation5:
     SAVE
 
+    // Initialisation
+    mov     x19, x0     // char* tabAscii
+    mov     x20, 0      // int taille
+    mov     x21, 0      // int i
+    mov     x22, 0      // int j
+    mov     x27, 1      // int nb_perm = 1
 
+// Boucle calcul de taille
+boucle_taille_op5:
+    ldrb    w23, [x19]
+    cbz     w23, check_besoin_permutation        
+    add     x20, x20, 1
+    add     x19, x19, 1
+    b       boucle_taille_op5
+
+check_besoin_permutation:
+    cmp     x20, 2     // taille < 2 donc pas de permutation
+    b.lt    retour_sans_permutation
+
+debut_permutation:
+    SAVE
+    cmp     x21, x20     // si i == taille
+    b.ge    imprime_permutation
+    mov     x22, x21     // j = i
+
+boucle_permutation:
+    cmp     x22, x20     // int j (de i jusqu'a taille-1)
+    b.ge    fin_permutation
+
+    // Echange de tabAscii[i] et tabAscii[j]
+    ldrb    w25, [x19, x21]     // char temp = tabAscii[i]
+    ldrb    w26, [x19, x22]     // char tabAscii[i] = tabAscii[j]
+    strb    w26, [x19, x21]
+    strb    w25, [x19, x22]     // char tabAscii[j] = temp
+
+    add     x21, x21, 1     // i++
+    bl      debut_permutation         // recursion avec i+1
+    sub     x21, x21, 1     // i--
+
+    // On refait l'echange tabAscii[i] and tabAscii[j] 
+    ldrb    w25, [x19, x21]     // char temp = tabAscii[i]
+    ldrb    w26, [x19, x22]     // char tabAscii[i] = tabAscii[j]
+    strb    w26, [x19, x21]
+    strb    w25, [x19, x22]     // char tabAscii[j] = temp
+
+    add     x22, x22, 1     // j++
+    b       boucle_permutation
+
+fin_permutation:
+    RESTORE
+    b     fin_op5
+
+imprime_permutation:
+    mov     x28, x19    // copie de tabAscii pour impression
+    mul     x27, x27, x20     // nb perm x taille pour pointeur
+    strb    wzr, [x19, x27]   // Ajout de char null pour fin de string
+    
+    add     x28, x28, x27     // pointeur sur debut de prochaine permut
+    add     x27, x27, 1       // increment nb_perm
+    
+    adr     x0, fmtOutMsg
+    mov     x1, x28
+    bl      printf
+    
+    ret
+
+retour_sans_permutation:
+    adr     x0, fmtOutMsg
+    adr     x1, MsgError
+    bl      printf
+
+fin_op5:
     RESTORE
     ret
-    
 
 .section ".data"
 // Mémoire allouée pour une chaîne de caractères d'au plus 1024 octets
