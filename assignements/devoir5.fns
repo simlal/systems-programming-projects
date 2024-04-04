@@ -1,0 +1,25 @@
+; devoir5.asm
+init_palette                     = $C1B4
+palettes                         = $C21F
+fin_deplacement                  = $C0C3
+main                             = $C000
+deplacement_droite               = $C0AE
+arriere0                         = $C23F
+arriere1                         = $C33F
+init_arriere_attr3               = $C214
+init_arriere_attr02              = $C208
+arriere2                         = $C43F
+init_palette_boucle              = $C1C0
+arriere3                         = $C53F
+update_mario                     = $C0C4
+deplacer_mario                   = $C088
+init_arriere                     = $C1CC
+boucle                           = $C01D
+init_arriere_tuile0              = $C1D8
+deplacement_gauche               = $C099
+init_arriere_tuile1              = $C1E5
+init_arriere_tuile2              = $C1F0
+init_arriere_tuile3              = $C1FB
+lire_manette                     = $C056
+update                           = $C020
+init_variables                   = $C02A
